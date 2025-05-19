@@ -34,13 +34,9 @@
         }
 
         .navbar {
-            background-color: var(--primary-color);
+            background-color: var(--dark-color);
             color: var(--white-color);
-            padding: 1rem 2rem;
-            box-shadow: var(--shadow);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            padding: 1rem 0;
         }
 
         .navbar-content {
@@ -49,17 +45,19 @@
             align-items: center;
             max-width: 1200px;
             margin: 0 auto;
+            padding: 0 1rem;
         }
 
         .logo {
             display: flex;
             align-items: center;
             font-weight: 700;
-            font-size: 1.5rem;
+            font-size: 1.25rem;
         }
 
         .logo i {
             margin-right: 0.5rem;
+            color: var(--primary-color);
         }
 
         .nav-links {
@@ -74,8 +72,11 @@
         .nav-links a {
             color: var(--white-color);
             text-decoration: none;
-            font-weight: 500;
             transition: opacity 0.3s;
+        }
+
+        .nav-links a.active {
+            color: var(--primary-color);
         }
 
         .nav-links a:hover {
@@ -99,17 +100,18 @@
         .card-header {
             padding: 1.5rem;
             border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            background: linear-gradient(135deg, var(--primary-color), #64b5f6);
+            color: var(--white-color);
         }
 
         .card-title {
             font-size: 1.5rem;
             font-weight: 500;
-            color: var(--primary-color);
             margin-bottom: 0.5rem;
         }
 
         .card-subtitle {
-            color: #666;
+            opacity: 0.9;
             font-size: 1rem;
         }
 
@@ -124,6 +126,7 @@
             border-radius: var(--border-radius);
             overflow: hidden;
             aspect-ratio: 16 / 9;
+            margin-bottom: 1.5rem;
         }
 
         video {
@@ -134,14 +137,14 @@
 
         .recording-indicator {
             position: absolute;
-            top: 1rem;
-            left: 1rem;
+            top: 10px;
+            left: 10px;
             display: flex;
             align-items: center;
-            background-color: rgba(0, 0, 0, 0.6);
+            background-color: rgba(0, 0, 0, 0.5);
             color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 50px;
+            padding: 5px 10px;
+            border-radius: 4px;
             display: none;
         }
 
@@ -162,19 +165,19 @@
 
         .timer {
             font-family: monospace;
-            font-size: 1rem;
-            margin-left: 0.5rem;
+            font-size: 16px;
+            margin-left: 10px;
         }
 
         .controls {
             display: flex;
-            flex-wrap: wrap;
             gap: 1rem;
             margin-top: 1.5rem;
+            flex-wrap: wrap;
         }
 
         .btn {
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             padding: 0.75rem 1.5rem;
@@ -184,6 +187,8 @@
             font-weight: 500;
             transition: all 0.3s;
             font-size: 1rem;
+            text-decoration: none;
+            flex: 1;
             min-width: 120px;
         }
 
@@ -193,16 +198,6 @@
 
         .btn-primary {
             background-color: var(--primary-color);
-            color: var(--white-color);
-        }
-
-        .btn-secondary {
-            background-color: var(--secondary-color);
-            color: var(--white-color);
-        }
-
-        .btn-success {
-            background-color: var(--success-color);
             color: var(--white-color);
         }
 
@@ -216,28 +211,56 @@
             color: var(--white-color);
         }
 
+        .btn-success {
+            background-color: var(--success-color);
+            color: var(--white-color);
+        }
+
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
-        .btn:active {
-            transform: translateY(0);
-        }
-
         .btn:disabled {
-            background-color: #ccc;
+            opacity: 0.6;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
         }
 
-        .settings-panel {
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
             margin-bottom: 1.5rem;
         }
 
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .tab:hover {
+            color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
         .form-group {
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         .form-label {
@@ -248,31 +271,25 @@
 
         .radio-group {
             display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
+            gap: 1.5rem;
             margin-top: 0.5rem;
+            flex-wrap: wrap;
         }
 
         .radio-option {
             display: flex;
             align-items: center;
             cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 4px;
-            transition: background-color 0.2s;
-        }
-
-        .radio-option:hover {
-            background-color: rgba(33, 150, 243, 0.1);
         }
 
         .radio-option input {
             margin-right: 0.5rem;
-            cursor: pointer;
         }
 
         .select-wrapper {
             position: relative;
+            width: 100%;
+            max-width: 300px;
         }
 
         select {
@@ -282,22 +299,24 @@
             border-radius: var(--border-radius);
             background-color: var(--white-color);
             appearance: none;
+            cursor: pointer;
+            font-family: inherit;
             font-size: 1rem;
         }
 
         .select-wrapper::after {
             content: '\f107';
-            font-family: 'Font Awesome 6 Free';
+            font-family: 'Font Awesome 5 Free';
             font-weight: 900;
             position: absolute;
-            right: 1rem;
+            right: 12px;
             top: 50%;
             transform: translateY(-50%);
             pointer-events: none;
         }
 
         .recordings-list {
-            margin-top: 2rem;
+            margin-top: 1.5rem;
         }
 
         .recording-item {
@@ -305,11 +324,6 @@
             align-items: center;
             padding: 1rem;
             border-bottom: 1px solid #eee;
-            transition: background-color 0.3s;
-        }
-
-        .recording-item:hover {
-            background-color: #f9f9f9;
         }
 
         .recording-thumbnail {
@@ -357,33 +371,6 @@
             color: var(--danger-color);
         }
 
-        .tabs {
-            display: flex;
-            border-bottom: 1px solid #ddd;
-            margin-bottom: 1.5rem;
-        }
-
-        .tab {
-            padding: 0.75rem 1.5rem;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            transition: all 0.3s;
-        }
-
-        .tab.active {
-            border-bottom-color: var(--primary-color);
-            color: var(--primary-color);
-            font-weight: 500;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
         .footer {
             background-color: var(--dark-color);
             color: var(--white-color);
@@ -403,6 +390,7 @@
             justify-content: center;
             list-style: none;
             margin: 1rem 0;
+            flex-wrap: wrap;
         }
 
         .footer-links li {
@@ -465,10 +453,9 @@
                 <span>Web Screen Recorder</span>
             </div>
             <ul class="nav-links">
-                <li><a href="#" class="active">Recorder</a></li>
-                <li><a href="#">My Recordings</a></li>
-                <li><a href="#">Settings</a></li>
-                <li><a href="#">About</a></li>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="demo.html">Basic Demo</a></li>
+                <li><a href="advanced-demo.html" class="active">Advanced Demo</a></li>
             </ul>
         </div>
     </nav>
@@ -569,11 +556,10 @@
     <footer class="footer">
         <div class="footer-content">
             <ul class="footer-links">
-                <li><a href="#">Home</a></li>
-                <li><a href="#">About</a></li>
-                <li><a href="#">Privacy Policy</a></li>
-                <li><a href="#">Terms of Service</a></li>
-                <li><a href="#">Contact</a></li>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="PROJECT_DOCUMENTATION.md">Documentation</a></li>
+                <li><a href="USER_GUIDE.md">User Guide</a></li>
+                <li><a href="PRESENTATION.md">Presentation</a></li>
             </ul>
             <p class="copyright">&copy; 2025 Web Screen Recorder - Final Year Project</p>
         </div>
@@ -685,20 +671,6 @@
                     }
                 }
 
-                // Try to capture system audio if requested
-                // Note: System audio capture is not fully supported in all browsers
-                if (audioSource === 'system' || audioSource === 'both') {
-                    try {
-                        // For Chrome, we need to set audio: true in getDisplayMedia
-                        if (!stream.getAudioTracks().length) {
-                            alert('System audio capture may not be fully supported in your browser. Please check if audio is being recorded.');
-                        }
-                    } catch (error) {
-                        console.error('Error capturing system audio:', error);
-                        alert('System audio capture is not supported in your browser. Recording will continue without system audio.');
-                    }
-                }
-
                 // Display the stream in the video element
                 videoElement.srcObject = stream;
 
@@ -731,23 +703,33 @@
                 };
             } catch (error) {
                 console.error('Error starting recording:', error);
-                alert('Error starting recording. Please make sure you have granted the necessary permissions.');
+                alert('Could not start recording: ' + error.message);
             }
         }
 
         function togglePause() {
+            if (!mediaRecorder) return;
+
             if (isPaused) {
                 // Resume recording
                 mediaRecorder.resume();
                 isPaused = false;
                 pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
-                resumeTimer();
+                pauseBtn.classList.remove('btn-primary');
+                pauseBtn.classList.add('btn-warning');
+
+                // Resume timer
+                startTimer();
             } else {
                 // Pause recording
                 mediaRecorder.pause();
                 isPaused = true;
                 pauseBtn.innerHTML = '<i class="fas fa-play"></i> Resume';
-                pauseTimer();
+                pauseBtn.classList.remove('btn-warning');
+                pauseBtn.classList.add('btn-primary');
+
+                // Pause timer
+                clearInterval(timerInterval);
             }
         }
 
@@ -757,6 +739,7 @@
             // Stop recording
             mediaRecorder.stop();
             isRecording = false;
+            isPaused = false;
 
             // Stop all tracks
             if (stream) {
@@ -771,7 +754,7 @@
             recordingIndicator.style.display = 'none';
 
             // Stop timer
-            stopTimer();
+            clearInterval(timerInterval);
         }
 
         function handleDataAvailable(event) {
@@ -834,21 +817,106 @@
             }, 100);
         }
 
+        function downloadSavedRecording(id) {
+            const recording = recordings.find(r => r.id === id);
+            if (!recording) return;
+
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = recording.url;
+            a.download = `screen-recording-${recording.id}.webm`;
+
+            document.body.appendChild(a);
+            a.click();
+
+            // Clean up
+            setTimeout(() => {
+                document.body.removeChild(a);
+            }, 100);
+        }
+
+        function deleteRecording(id) {
+            const index = recordings.findIndex(r => r.id === id);
+            if (index === -1) return;
+
+            // Remove from array
+            const recording = recordings.splice(index, 1)[0];
+
+            // Update localStorage
+            localStorage.setItem('recordings', JSON.stringify(recordings));
+
+            // Revoke URL
+            URL.revokeObjectURL(recording.url);
+
+            // Update UI
+            updateRecordingsList();
+        }
+
+        function startTimer() {
+            // Clear any existing timer
+            clearInterval(timerInterval);
+
+            // Set start time if not resuming
+            if (!isPaused) {
+                startTime = Date.now() - elapsedTime;
+            } else {
+                startTime = Date.now() - elapsedTime;
+            }
+
+            // Update timer display every 1000ms (1 second)
+            timerInterval = setInterval(() => {
+                elapsedTime = Date.now() - startTime;
+                updateTimerDisplay();
+            }, 1000);
+
+            // Initial display update
+            updateTimerDisplay();
+        }
+
+        function updateTimerDisplay() {
+            const totalSeconds = Math.floor(elapsedTime / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            timerElement.textContent = [
+                hours.toString().padStart(2, '0'),
+                minutes.toString().padStart(2, '0'),
+                seconds.toString().padStart(2, '0')
+            ].join(':');
+        }
+
         function updateRecordingsList() {
+            // Clear current list
+            recordingsList.innerHTML = '';
+
             if (recordings.length === 0) {
                 recordingsList.innerHTML = '<p>No recordings yet. Start recording to see your recordings here.</p>';
                 return;
             }
 
-            recordingsList.innerHTML = '';
-
+            // Add each recording to the list
             recordings.forEach(recording => {
                 const item = document.createElement('div');
                 item.className = 'recording-item';
 
-                const formattedDate = new Date(recording.date).toLocaleString();
-                const formattedDuration = formatTime(Math.floor(recording.duration / 1000));
-                const formattedSize = formatSize(recording.size);
+                // Format date
+                const date = new Date(recording.date);
+                const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+
+                // Format duration
+                const totalSeconds = Math.floor(recording.duration / 1000);
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+                const formattedDuration = [
+                    hours.toString().padStart(2, '0'),
+                    minutes.toString().padStart(2, '0'),
+                    seconds.toString().padStart(2, '0')
+                ].join(':');
+
+                // Format size
+                const formattedSize = formatFileSize(recording.size);
 
                 item.innerHTML = `
                     <div class="recording-thumbnail">
@@ -900,88 +968,12 @@
             tabs[0].click();
 
             // Play the recording
+            videoElement.srcObject = null;
             videoElement.src = recording.url;
             videoElement.controls = true;
         }
 
-        function downloadSavedRecording(id) {
-            const recording = recordings.find(r => r.id === id);
-            if (!recording) return;
-
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = recording.url;
-            a.download = `${recording.title.replace(/\s+/g, '-')}.webm`;
-
-            document.body.appendChild(a);
-            a.click();
-
-            // Clean up
-            setTimeout(() => {
-                document.body.removeChild(a);
-            }, 100);
-        }
-
-        function deleteRecording(id) {
-            if (!confirm('Are you sure you want to delete this recording?')) return;
-
-            const index = recordings.findIndex(r => r.id === id);
-            if (index === -1) return;
-
-            // Revoke URL to free memory
-            URL.revokeObjectURL(recordings[index].url);
-
-            // Remove from array
-            recordings.splice(index, 1);
-
-            // Update local storage
-            localStorage.setItem('recordings', JSON.stringify(recordings));
-
-            // Update UI
-            updateRecordingsList();
-        }
-
-        // Timer functions
-        function startTimer() {
-            startTime = Date.now() - elapsedTime;
-            timerInterval = setInterval(updateTimer, 1000);
-        }
-
-        function pauseTimer() {
-            clearInterval(timerInterval);
-        }
-
-        function resumeTimer() {
-            startTime = Date.now() - elapsedTime;
-            timerInterval = setInterval(updateTimer, 1000);
-        }
-
-        function stopTimer() {
-            clearInterval(timerInterval);
-        }
-
-        function updateTimer() {
-            elapsedTime = Date.now() - startTime;
-            updateTimerDisplay();
-        }
-
-        function updateTimerDisplay() {
-            timerElement.textContent = formatTime(Math.floor(elapsedTime / 1000));
-        }
-
-        function formatTime(totalSeconds) {
-            const hours = Math.floor(totalSeconds / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const seconds = totalSeconds % 60;
-
-            return [
-                hours.toString().padStart(2, '0'),
-                minutes.toString().padStart(2, '0'),
-                seconds.toString().padStart(2, '0')
-            ].join(':');
-        }
-
-        function formatSize(bytes) {
+        function formatFileSize(bytes) {
             if (bytes === 0) return '0 Bytes';
 
             const k = 1024;
