@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Recorder Settings - Web Screen Recorder{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="mb-4">
+        <h1 style="font-size: 2rem; font-weight: 500;">Recorder Settings</h1>
+        <p class="text-muted">Customize your screen recording experience</p>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-3 mb-4">
+            <div class="list-group border-0 shadow">
+                <a href="#video-settings" class="list-group-item list-group-item-action active">
+                    <i class="fas fa-video me-2"></i>Video Settings
+                </a>
+                <a href="#audio-settings" class="list-group-item list-group-item-action">
+                    <i class="fas fa-microphone me-2"></i>Audio Settings
+                </a>
+                <a href="#recording-settings" class="list-group-item list-group-item-action">
+                    <i class="fas fa-cog me-2"></i>Recording Settings
+                </a>
+                <a href="{% url 'profile' %}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-user me-2"></i>Profile Settings
+                </a>
+            </div>
+
+            <div class="card border-0 shadow mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">Need Help?</h5>
+                    <p class="card-text small">Having trouble with your settings? Check out our documentation or contact support.</p>
+                    <a href="#" class="btn btn-outline-primary btn-sm">View Documentation</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+            <form method="POST">
+                {% csrf_token %}
+
+                <div class="card border-0 shadow mb-4" id="video-settings">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0">Video Settings</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.video_quality|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.frame_rate|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.show_cursor|as_crispy_field }}
+                            <small class="text-muted d-block mt-1">Show or hide the mouse cursor in your recordings</small>
+                        </div>
+
+                        <div class="alert alert-info small">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Higher quality and frame rate will result in larger file sizes and may affect performance.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow mb-4" id="audio-settings">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0">Audio Settings</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            {{ form.record_audio|as_crispy_field }}
+                            <small class="text-muted d-block mt-1">Enable or disable audio recording</small>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.audio_source|as_crispy_field }}
+                        </div>
+
+                        <div class="alert alert-warning small">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            System audio recording may not be supported in all browsers. For best results, use Chrome.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow mb-4" id="recording-settings">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0">Recording Settings</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.countdown_seconds|as_crispy_field }}
+                                <small class="text-muted d-block mt-1">Time to prepare before recording starts</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.auto_save|as_crispy_field }}
+                                <small class="text-muted d-block mt-1">Automatically save recordings when completed</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mb-4">
+                    <a href="{% url 'recorder' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle tab navigation
+        const tabLinks = document.querySelectorAll('.list-group-item');
+
+        tabLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (this.getAttribute('href').startsWith('#')) {
+                    e.preventDefault();
+
+                    // Remove active class from all links
+                    tabLinks.forEach(l => l.classList.remove('active'));
+
+                    // Add active class to clicked link
+                    this.classList.add('active');
+
+                    // Scroll to section
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 20,
+                            behavior: 'smooth'
+                        });
+                    }
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

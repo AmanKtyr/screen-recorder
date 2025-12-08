@@ -23,6 +23,11 @@ var/
 .installed.cfg
 *.egg
 
+# Django
+*.log
+db.sqlite3
+media/
+
 # IDE files
 .idea/
 .vscode/
@@ -36,9 +41,12 @@ recordings/
 *.avi
 *.mov
 *.mkv
+*.webm
 
 # Logs
 *.log
 
 # FFmpeg temporary files
 *.tmp
+
+web-screen-recorder-react

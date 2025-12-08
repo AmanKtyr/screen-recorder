@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Login - Web Screen Recorder{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 450px;">
+    <div class="text-center mb-4">
+        <h1 style="font-size: 2rem; font-weight: 500;">Sign In</h1>
+        <p class="text-muted">Access your account to manage recordings</p>
+    </div>
+
+    <div class="card border-0 shadow">
+        <div class="card-body p-4">
+            <form method="POST">
+                {% csrf_token %}
+                {{ form|crispy }}
+
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                    </button>
+                </div>
+            </form>
+
+            <div class="text-center mt-4">
+                <p>Don't have an account? <a href="{% url 'register' %}" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">Register here</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <p class="text-muted">By signing in, you agree to our Terms of Service and Privacy Policy</p>
+    </div>
+</div>
+{% endblock %}

@@ -181,6 +181,11 @@ class ScreenRecorder(QObject):
             # Initialize video writer
             fourcc = cv2.VideoWriter_fourcc(*'XVID')
             fps = 30.0
+
+            # Make sure the directory exists
+            os.makedirs(os.path.dirname(self.temp_video_file), exist_ok=True)
+
+            # Create video writer
             out = cv2.VideoWriter(
                 self.temp_video_file,
                 fourcc,
@@ -188,23 +193,71 @@ class ScreenRecorder(QObject):
                 (capture_width, capture_height)
             )
 
+            # Check if video writer was initialized properly
+            if not out.isOpened():
+                raise Exception(f"Failed to initialize video writer with dimensions {capture_width}x{capture_height}")
+
+            print(f"Recording started with dimensions: {capture_width}x{capture_height}")
+            print(f"Temporary video file: {self.temp_video_file}")
+
+            # Variables for FPS calculation
+            frame_count = 0
+            start_time = time.time()
+            last_fps_print = start_time
+
             # Start recording loop
             while not self.stop_requested:
                 if not self.is_paused:
-                    # Capture screen
-                    img = self._capture_screen()
+                    try:
+                        # Capture screen
+                        img = self._capture_screen()
 
-                    # Write frame to video
-                    out.write(img)
+                        # Check if image is valid
+                        if img is None or img.size == 0:
+                            print("Warning: Captured empty frame")
+                            time.sleep(1/fps)
+                            continue
+
+                        # Make sure image has the right dimensions
+                        if img.shape[1] != capture_width or img.shape[0] != capture_height:
+                            img = cv2.resize(img, (capture_width, capture_height))
+
+                        # Write frame to video
+                        out.write(img)
+
+                        # Update frame count
+                        frame_count += 1
+
+                        # Print FPS every 5 seconds
+                        current_time = time.time()
+                        if current_time - last_fps_print >= 5:
+                            elapsed = current_time - start_time
+                            current_fps = frame_count / elapsed if elapsed > 0 else 0
+                            print(f"Recording at {current_fps:.2f} FPS")
+                            last_fps_print = current_time
+
+                    except Exception as e:
+                        print(f"Error capturing frame: {e}")
+                        # Continue recording despite errors
 
                 # Sleep to maintain frame rate
                 time.sleep(1/fps)
 
+            # Calculate final statistics
+            end_time = time.time()
+            total_time = end_time - start_time
+            avg_fps = frame_count / total_time if total_time > 0 else 0
+            print(f"Recording finished: {frame_count} frames in {total_time:.2f} seconds ({avg_fps:.2f} FPS)")
+
             # Release video writer
             out.release()
+            print(f"Video file saved: {self.temp_video_file}")
 
         except Exception as e:
-            self.error_signal.emit(f"Error recording screen: {str(e)}")
+            import traceback
+            error_msg = f"Error recording screen: {str(e)}\n{traceback.format_exc()}"
+            print(error_msg)
+            self.error_signal.emit(error_msg)
             self.stop_requested = True
 
     def set_region(self, region):
@@ -232,65 +285,126 @@ class ScreenRecorder(QObject):
         # This is a simplified version - in a real implementation,
         # you would use platform-specific methods for better performance
 
-        # For Windows, you might use:
-        import numpy as np
-        from PIL import ImageGrab
+        try:
+            # For Windows, you might use:
+            import numpy as np
+            from PIL import ImageGrab
 
-        # Capture screen or region
-        if self.use_region and self.region:
-            x, y, width, height = self.region
-            img = ImageGrab.grab(bbox=(x, y, x + width, y + height))
-            capture_width = width
-            capture_height = height
-        else:
-            img = ImageGrab.grab(bbox=(0, 0, self.screen_width, self.screen_height))
-            capture_width = self.screen_width
-            capture_height = self.screen_height
+            # Capture screen or region
+            if self.use_region and self.region:
+                x, y, width, height = self.region
+                img = ImageGrab.grab(bbox=(x, y, x + width, y + height))
+            else:
+                img = ImageGrab.grab(bbox=(0, 0, self.screen_width, self.screen_height))
 
-        # Convert to numpy array
-        img_np = np.array(img)
+            # Convert to numpy array
+            img_np = np.array(img)
 
-        # Convert from BGR to RGB
-        img_np = cv2.cvtColor(img_np, cv2.COLOR_BGR2RGB)
+            # Convert from BGR to RGB
+            img_np = cv2.cvtColor(img_np, cv2.COLOR_BGR2RGB)
 
-        return img_np
+            return img_np
+
+        except Exception as e:
+            print(f"Error capturing screen: {e}")
+            # Return a blank image of the correct size as a fallback
+            if self.use_region and self.region:
+                width = self.region[2]
+                height = self.region[3]
+            else:
+                width = self.screen_width
+                height = self.screen_height
+
+            return np.zeros((height, width, 3), dtype=np.uint8)
 
     def _combine_video_audio(self):
         """Combine video and audio files into the final output."""
         try:
+            # Make sure output directory exists
+            os.makedirs(os.path.dirname(self.output_file), exist_ok=True)
+
+            # Check if video file exists
+            if not os.path.exists(self.temp_video_file):
+                raise Exception(f"Video file not found: {self.temp_video_file}")
+
+            # Check if audio file exists
+            has_audio = os.path.exists(self.temp_audio_file) and os.path.getsize(self.temp_audio_file) > 0
+
             # Check if FFmpeg is available
             try:
-                subprocess.run(["ffmpeg", "-version"],
-                              stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE,
-                              check=True)
-            except (subprocess.SubprocessError, FileNotFoundError):
+                result = subprocess.run(
+                    ["ffmpeg", "-version"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=True,
+                    text=True
+                )
+                print(f"Using FFmpeg: {result.stdout.splitlines()[0] if result.stdout else 'version unknown'}")
+            except (subprocess.SubprocessError, FileNotFoundError) as e:
+                print(f"FFmpeg error: {e}")
                 raise Exception("FFmpeg is not installed or not in PATH")
 
             # Combine video and audio using FFmpeg
-            cmd = [
-                "ffmpeg",
-                "-i", self.temp_video_file,
-                "-i", self.temp_audio_file,
-                "-c:v", "libx264",
-                "-c:a", "aac",
-                "-strict", "experimental",
-                "-shortest",
-                self.output_file
-            ]
+            if has_audio:
+                print(f"Combining video ({self.temp_video_file}) and audio ({self.temp_audio_file})")
+                cmd = [
+                    "ffmpeg",
+                    "-i", self.temp_video_file,
+                    "-i", self.temp_audio_file,
+                    "-c:v", "libx264",
+                    "-c:a", "aac",
+                    "-strict", "experimental",
+                    "-shortest",
+                    "-y",  # Overwrite output file if it exists
+                    self.output_file
+                ]
+            else:
+                print(f"No audio file found, using video only: {self.temp_video_file}")
+                cmd = [
+                    "ffmpeg",
+                    "-i", self.temp_video_file,
+                    "-c:v", "libx264",
+                    "-y",  # Overwrite output file if it exists
+                    self.output_file
+                ]
 
-            subprocess.run(cmd, check=True)
+            # Run FFmpeg command
+            process = subprocess.run(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=True,
+                text=True
+            )
+
+            print(f"FFmpeg output: {process.stderr}")
+            print(f"Recording saved to: {self.output_file}")
 
             # Clean up temporary files
-            if os.path.exists(self.temp_video_file):
-                os.remove(self.temp_video_file)
+            try:
+                if os.path.exists(self.temp_video_file):
+                    os.remove(self.temp_video_file)
+                    print(f"Deleted temporary video file: {self.temp_video_file}")
 
-            if os.path.exists(self.temp_audio_file):
-                os.remove(self.temp_audio_file)
+                if os.path.exists(self.temp_audio_file):
+                    os.remove(self.temp_audio_file)
+                    print(f"Deleted temporary audio file: {self.temp_audio_file}")
+            except Exception as e:
+                print(f"Warning: Failed to delete temporary files: {e}")
 
         except Exception as e:
-            self.error_signal.emit(f"Error combining video and audio: {str(e)}")
+            import traceback
+            error_msg = f"Error combining video and audio: {str(e)}\n{traceback.format_exc()}"
+            print(error_msg)
+            self.error_signal.emit(error_msg)
 
             # If combining fails, just use the video file
-            if os.path.exists(self.temp_video_file):
-                os.rename(self.temp_video_file, self.output_file)
+            try:
+                if os.path.exists(self.temp_video_file):
+                    print(f"Fallback: Copying video file to output")
+                    # Use copy instead of rename to avoid issues with different drives
+                    import shutil
+                    shutil.copy2(self.temp_video_file, self.output_file)
+                    print(f"Video file copied to: {self.output_file}")
+            except Exception as copy_error:
+                print(f"Failed to copy video file: {copy_error}")

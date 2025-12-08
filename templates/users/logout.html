@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Logged Out - Web Screen Recorder{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-lg text-center">
+            <div class="card-body p-5">
+                <div class="mb-4">
+                    <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                </div>
+                <h2 class="mb-4">You have been logged out</h2>
+                <p class="lead mb-4">Thank you for using Web Screen Recorder!</p>
+                <div class="d-grid gap-2 col-6 mx-auto">
+                    <a href="{% url 'login' %}" class="btn btn-primary">
+                        <i class="fas fa-sign-in-alt me-2"></i>Log In Again
+                    </a>
+                    <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-home me-2"></i>Return to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

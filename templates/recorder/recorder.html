@@ -1,0 +1,947 @@
+{% extends 'base.html' %}
+
+{% block title %}Record Your Screen - Web Screen Recorder{% endblock %}
+
+{% block extra_css %}
+<style>
+    #video-preview {
+        width: 100%;
+        height: auto;
+        background-color: #000;
+        border-radius: 8px;
+    }
+
+    .recording-controls {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .control-btn {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .control-btn:hover {
+        transform: scale(1.1);
+    }
+
+    .countdown {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 6rem;
+        color: white;
+        text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        z-index: 100;
+    }
+
+    .recording-indicator {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background-color: rgba(231, 76, 60, 0.8);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        z-index: 100;
+    }
+
+    .recording-indicator .blink {
+        width: 12px;
+        height: 12px;
+        background-color: red;
+        border-radius: 50%;
+        animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+        0% { opacity: 1; }
+        50% { opacity: 0.3; }
+        100% { opacity: 1; }
+    }
+
+    .timer {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-family: monospace;
+        font-size: 1.2rem;
+        z-index: 100;
+    }
+
+    .video-container {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Custom styles for radio buttons */
+    .form-check-input[type="radio"] {
+        width: 20px;
+        height: 20px;
+        margin-top: 3px;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative;
+        cursor: pointer;
+        appearance: auto;
+        -webkit-appearance: auto;
+        border: 2px solid #ccc;
+        transition: all 0.2s ease;
+        outline: none;
+    }
+
+    .form-check {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        margin-right: 8px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+    }
+
+    .form-check:hover {
+        background-color: rgba(33, 150, 243, 0.05);
+    }
+
+    .form-check.active {
+        background-color: rgba(33, 150, 243, 0.15);
+        border: 1px solid var(--primary-color);
+    }
+
+    .form-check-label {
+        margin-left: 8px;
+        cursor: pointer;
+        font-weight: 500;
+    }
+
+    /* Style for checked radio buttons */
+    .form-check-input[type="radio"]:checked {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+    }
+
+    /* Style for the container of the radio buttons */
+    .form-check-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+    /* Style for disabled radio buttons */
+    .form-check-input[type="radio"]:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .form-check-input[type="radio"]:disabled + .form-check-label {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    /* Style for focused state */
+    .form-check.focused {
+        background-color: rgba(33, 150, 243, 0.1);
+        border: 1px solid var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+        border-radius: 4px;
+    }
+
+    .form-check-input[type="radio"]:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.25);
+    }
+
+    /* Ensure radio buttons are visible in all browsers */
+    @-moz-document url-prefix() {
+        .form-check-input[type="radio"] {
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+    }
+
+    /* Safari specific fixes */
+    @media not all and (min-resolution:.001dpcm) {
+        @supports (-webkit-appearance:none) {
+            .form-check-input[type="radio"] {
+                -webkit-appearance: none;
+                background-color: white;
+                border: 2px solid #ccc;
+                border-radius: 50%;
+            }
+
+            .form-check-input[type="radio"]:checked {
+                background-color: white;
+                border-color: var(--primary-color);
+                box-shadow: inset 0 0 0 4px var(--primary-color);
+            }
+        }
+    }
+
+    /* Edge and IE specific fixes */
+    @supports (-ms-ime-align:auto) {
+        .form-check-input[type="radio"] {
+            appearance: radio;
+            -webkit-appearance: radio;
+        }
+    }
+
+    /* Chrome specific fixes */
+    @media screen and (-webkit-min-device-pixel-ratio:0) {
+        .form-check-input[type="radio"] {
+            border-radius: 50%;
+        }
+    }
+
+    /* Utility class for screen reader only content */
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="text-center mb-4">Screen Recorder</h1>
+
+    <!-- Screen reader announcement (visually hidden) -->
+    <div id="sr-announcement" class="visually-hidden" aria-live="polite"></div>
+
+    <div id="error-alert" class="alert alert-danger" style="display: none;">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        <span id="error-message-text">Failed to start recording. Please make sure you have granted the necessary permissions.</span>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body p-0">
+            <div class="video-container">
+                <video id="video-preview" class="video-preview" autoplay muted></video>
+                <div id="countdown" class="countdown" style="display: none;"></div>
+                <div id="recording-indicator" class="recording-indicator" style="display: none;">
+                    <div class="recording-indicator-dot"></div>
+                    <span>Recording</span>
+                </div>
+                <div id="timer" class="timer" style="display: none;">00:00:00</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Settings Panel -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Audio Settings</h5>
+        </div>
+        <div class="card-body">
+            <div class="form-group">
+                <fieldset>
+                    <legend class="visually-hidden">Audio Source</legend>
+                    <div class="form-check-container">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="audio-source" id="audio-mic" value="mic" {% if settings.audio_source == 'mic' %}checked{% endif %}>
+                            <label class="form-check-label" for="audio-mic">
+                                Microphone
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="audio-source" id="audio-system" value="system" {% if settings.audio_source == 'system' %}checked{% endif %} disabled>
+                            <label class="form-check-label" for="audio-system">
+                                System Audio
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="audio-source" id="audio-both" value="both" {% if settings.audio_source == 'both' %}checked{% endif %} disabled>
+                            <label class="form-check-label" for="audio-both">
+                                Both
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="audio-source" id="audio-none" value="none" {% if settings.audio_source == 'none' %}checked{% endif %}>
+                            <label class="form-check-label" for="audio-none">
+                                No Audio
+                            </label>
+                        </div>
+                    </div>
+                </fieldset>
+                <small class="form-text text-muted mt-2">System audio may not be supported in all browsers</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recording Controls -->
+    <div class="controls-container mb-4">
+        <button id="start-btn" class="btn btn-primary btn-lg">
+            <i class="fas fa-play me-2"></i> Start Recording
+        </button>
+
+        <button id="pause-btn" class="btn btn-secondary btn-lg" disabled style="display: none;">
+            <i class="fas fa-pause me-2"></i> Pause
+        </button>
+
+        <button id="resume-btn" class="btn btn-primary btn-lg" disabled style="display: none;">
+            <i class="fas fa-play me-2"></i> Resume
+        </button>
+
+        <button id="stop-btn" class="btn btn-danger btn-lg" disabled style="display: none;">
+            <i class="fas fa-stop me-2"></i> Stop Recording
+        </button>
+    </div>
+
+    <!-- Recording Details (only shown when not recording) -->
+    <div id="recording-details" class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Recording Details</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="recording-title" class="form-label">Title</label>
+                <input type="text" class="form-control" id="recording-title" placeholder="Enter a title for your recording">
+            </div>
+
+            <div class="mb-3">
+                <label for="recording-description" class="form-label">Description (optional)</label>
+                <textarea class="form-control" id="recording-description" rows="3" placeholder="Enter a description"></textarea>
+            </div>
+
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="is-public">
+                <label class="form-check-label" for="is-public">
+                    Make recording public
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Save Recording Modal -->
+<div class="modal fade" id="save-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Save Recording</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <div class="spinner-border text-primary" id="save-spinner" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p id="save-status">Processing your recording...</p>
+                </div>
+                <div id="save-success" style="display: none;">
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>Recording saved successfully!
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="#" id="view-recording-btn" class="btn btn-primary">
+                            <i class="fas fa-eye me-2"></i>View Recording
+                        </a>
+                        <a href="{% url 'recording_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-list me-2"></i>View All Recordings
+                        </a>
+                    </div>
+                </div>
+                <div id="save-error" style="display: none;">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <span id="error-message">An error occurred while saving your recording.</span>
+                    </div>
+                    <div class="d-grid">
+                        <button type="button" id="retry-btn" class="btn btn-primary">
+                            <i class="fas fa-redo me-2"></i>Retry
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Screen Recorder Utility
+    const screenRecorder = {
+        mediaRecorder: null,
+        stream: null,
+        recordedChunks: [],
+        startTime: null,
+        timerInterval: null,
+        isPaused: false,
+        pauseTime: null,
+
+        setup(options) {
+            this.onTimeUpdate = options.onTimeUpdate || (() => {});
+            this.onRecordingComplete = options.onRecordingComplete || (() => {});
+        },
+
+        async startRecording(options = {}) {
+            try {
+                // Default options
+                const defaultOptions = {
+                    audio: true,
+                    video: {
+                        cursor: 'always'
+                    }
+                };
+
+                // Merge options
+                const mediaOptions = {
+                    ...defaultOptions,
+                    ...options
+                };
+
+                // Request screen capture
+                this.stream = await navigator.mediaDevices.getDisplayMedia(mediaOptions);
+
+                // Add audio track if needed
+                if (options.audioSource === 'mic') {
+                    const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    audioStream.getAudioTracks().forEach(track => this.stream.addTrack(track));
+                }
+
+                // Create media recorder
+                this.mediaRecorder = new MediaRecorder(this.stream, { mimeType: 'video/webm' });
+                this.recordedChunks = [];
+
+                // Handle data available event
+                this.mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) {
+                        this.recordedChunks.push(e.data);
+                    }
+                };
+
+                // Handle recording stop
+                this.mediaRecorder.onstop = () => {
+                    clearInterval(this.timerInterval);
+
+                    // Create blob from recorded chunks
+                    const blob = new Blob(this.recordedChunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    const duration = this.startTime ? (Date.now() - this.startTime) : 0;
+
+                    // Call callback with recording data
+                    this.onRecordingComplete({
+                        blob,
+                        url,
+                        duration,
+                        size: blob.size
+                    });
+
+                    // Reset state
+                    this.startTime = null;
+                    this.isPaused = false;
+                };
+
+                // Start recording
+                this.mediaRecorder.start(1000); // Collect data every second
+
+                // Start timer
+                this.startTime = Date.now();
+                this.startTimer();
+
+                return this.stream;
+            } catch (error) {
+                console.error('Error starting recording:', error);
+                throw error;
+            }
+        },
+
+        pauseRecording() {
+            if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+                this.mediaRecorder.pause();
+                this.isPaused = true;
+                this.pauseTime = Date.now();
+                clearInterval(this.timerInterval);
+            }
+        },
+
+        resumeRecording() {
+            if (this.mediaRecorder && this.mediaRecorder.state === 'paused') {
+                this.mediaRecorder.resume();
+                this.isPaused = false;
+
+                // Adjust start time to account for pause duration
+                if (this.pauseTime) {
+                    const pauseDuration = Date.now() - this.pauseTime;
+                    this.startTime += pauseDuration;
+                    this.pauseTime = null;
+                }
+
+                this.startTimer();
+            }
+        },
+
+        stopRecording() {
+            if (this.mediaRecorder && (this.mediaRecorder.state === 'recording' || this.mediaRecorder.state === 'paused')) {
+                this.mediaRecorder.stop();
+
+                // Stop all tracks
+                if (this.stream) {
+                    this.stream.getTracks().forEach(track => track.stop());
+                }
+            }
+        },
+
+        startTimer() {
+            this.timerInterval = setInterval(() => {
+                const elapsedTime = Date.now() - this.startTime;
+                this.onTimeUpdate(elapsedTime);
+            }, 1000);
+        },
+
+        formatTime(ms) {
+            const seconds = Math.floor((ms / 1000) % 60);
+            const minutes = Math.floor((ms / (1000 * 60)) % 60);
+            const hours = Math.floor(ms / (1000 * 60 * 60));
+
+            return [
+                hours.toString().padStart(2, '0'),
+                minutes.toString().padStart(2, '0'),
+                seconds.toString().padStart(2, '0')
+            ].join(':');
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Elements
+        const videoPreview = document.getElementById('video-preview');
+        const startBtn = document.getElementById('start-btn');
+        const pauseBtn = document.getElementById('pause-btn');
+        const resumeBtn = document.getElementById('resume-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const countdownEl = document.getElementById('countdown');
+        const recordingIndicator = document.getElementById('recording-indicator');
+        const timerEl = document.getElementById('timer');
+        const errorAlert = document.getElementById('error-alert');
+        const errorMessageText = document.getElementById('error-message-text');
+        const recordingDetails = document.getElementById('recording-details');
+
+        // Audio source elements
+        const audioMic = document.getElementById('audio-mic');
+        const audioSystem = document.getElementById('audio-system');
+        const audioBoth = document.getElementById('audio-both');
+        const audioNone = document.getElementById('audio-none');
+
+        // Form elements
+        const titleInput = document.getElementById('recording-title');
+        const descriptionInput = document.getElementById('recording-description');
+        const isPublicCheckbox = document.getElementById('is-public');
+
+        // Save modal elements
+        const saveModal = new bootstrap.Modal(document.getElementById('save-modal'));
+        const saveSpinner = document.getElementById('save-spinner');
+        const saveStatus = document.getElementById('save-status');
+        const saveSuccess = document.getElementById('save-success');
+        const saveError = document.getElementById('save-error');
+        const errorMessage = document.getElementById('error-message');
+        const viewRecordingBtn = document.getElementById('view-recording-btn');
+        const retryBtn = document.getElementById('retry-btn');
+
+        // Variables
+        let isRecording = false;
+        let isPaused = false;
+        let recordingData = null;
+        let countdownSeconds = {{ settings.countdown_seconds }};
+
+        // Setup screen recorder
+        screenRecorder.setup({
+            onTimeUpdate: (time) => {
+                timerEl.textContent = screenRecorder.formatTime(time);
+            },
+            onRecordingComplete: (data) => {
+                recordingData = data;
+
+                // Display the recorded video
+                if (videoPreview) {
+                    videoPreview.src = data.url;
+                    videoPreview.controls = true;
+                }
+
+                // Show save modal
+                saveRecording();
+            }
+        });
+
+        // Get audio source
+        function getAudioSource() {
+            if (audioMic.checked) return 'mic';
+            if (audioSystem.checked) return 'system';
+            if (audioBoth.checked) return 'both';
+            if (audioNone.checked) return 'none';
+            return 'mic'; // Default
+        }
+
+        // Ensure radio buttons are properly initialized
+        function initializeAudioSourceRadios() {
+            // Make sure only one radio button is checked
+            const checkedRadio = document.querySelector('input[name="audio-source"]:checked');
+            if (!checkedRadio) {
+                // If none is checked, default to microphone
+                audioMic.checked = true;
+                audioMic.parentElement.classList.add('active');
+            } else {
+                // Add active class to the parent of the checked radio
+                checkedRadio.parentElement.classList.add('active');
+            }
+
+            // Add click event listeners to labels to improve selection
+            document.querySelectorAll('.form-check-label').forEach(label => {
+                label.addEventListener('click', function(e) {
+                    const radioId = this.getAttribute('for');
+                    const radio = document.getElementById(radioId);
+                    if (!radio.disabled) {
+                        handleRadioSelection(radioId);
+                        e.preventDefault(); // Prevent default to ensure our handler takes precedence
+                    }
+                });
+            });
+
+            // Add click event listeners to radio buttons
+            document.querySelectorAll('input[name="audio-source"]').forEach(radio => {
+                radio.addEventListener('click', function() {
+                    if (!this.disabled) {
+                        // Uncheck all other radios
+                        document.querySelectorAll('input[name="audio-source"]').forEach(r => {
+                            if (r !== this) {
+                                r.checked = false;
+                            }
+                        });
+                        // Ensure this one is checked
+                        this.checked = true;
+                    }
+                });
+            });
+
+            // Add a visual indicator when radio is focused
+            document.querySelectorAll('input[name="audio-source"]').forEach(radio => {
+                radio.addEventListener('focus', function() {
+                    if (!this.disabled) {
+                        this.parentElement.classList.add('focused');
+                    }
+                });
+
+                radio.addEventListener('blur', function() {
+                    this.parentElement.classList.remove('focused');
+                });
+
+                // Add keyboard support
+                radio.addEventListener('keydown', function(e) {
+                    // Space or Enter key to select
+                    if (e.key === ' ' || e.key === 'Enter') {
+                        e.preventDefault();
+                        if (!this.disabled) {
+                            this.checked = true;
+                            // Uncheck others
+                            document.querySelectorAll('input[name="audio-source"]').forEach(r => {
+                                if (r !== this) r.checked = false;
+                            });
+                        }
+                    }
+
+                    // Arrow keys for navigation between radio buttons
+                    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        const radioButtons = Array.from(document.querySelectorAll('input[name="audio-source"]:not([disabled])'));
+                        const currentIndex = radioButtons.indexOf(this);
+                        const nextIndex = (currentIndex + 1) % radioButtons.length;
+                        radioButtons[nextIndex].focus();
+                        radioButtons[nextIndex].checked = true;
+                        // Uncheck others
+                        radioButtons.forEach((r, i) => {
+                            if (i !== nextIndex) r.checked = false;
+                        });
+                    }
+
+                    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        const radioButtons = Array.from(document.querySelectorAll('input[name="audio-source"]:not([disabled])'));
+                        const currentIndex = radioButtons.indexOf(this);
+                        const prevIndex = (currentIndex - 1 + radioButtons.length) % radioButtons.length;
+                        radioButtons[prevIndex].focus();
+                        radioButtons[prevIndex].checked = true;
+                        // Uncheck others
+                        radioButtons.forEach((r, i) => {
+                            if (i !== prevIndex) r.checked = false;
+                        });
+                    }
+                });
+            });
+        }
+
+        // Start recording
+        async function handleStartRecording() {
+            try {
+                // Hide error alert
+                errorAlert.style.display = 'none';
+
+                // Hide recording details
+                recordingDetails.style.display = 'none';
+
+                // Get audio source
+                const audioSource = getAudioSource();
+
+                // Start countdown if enabled
+                if (countdownSeconds > 0) {
+                    await startCountdown();
+                }
+
+                // Start recording
+                await screenRecorder.startRecording({
+                    audioSource
+                });
+
+                // Show video preview
+                videoPreview.srcObject = screenRecorder.stream;
+
+                // Show recording indicator
+                recordingIndicator.style.display = 'flex';
+
+                // Show timer
+                timerEl.style.display = 'block';
+
+                // Update buttons
+                startBtn.style.display = 'none';
+                pauseBtn.style.display = 'inline-block';
+                pauseBtn.disabled = false;
+                stopBtn.style.display = 'inline-block';
+                stopBtn.disabled = false;
+
+                // Update state
+                isRecording = true;
+                isPaused = false;
+
+            } catch (error) {
+                console.error('Error starting recording:', error);
+                errorMessageText.textContent = 'Failed to start recording: ' + error.message;
+                errorAlert.style.display = 'block';
+            }
+        }
+
+        // Pause recording
+        function handlePauseRecording() {
+            screenRecorder.pauseRecording();
+
+            // Update recording indicator
+            recordingIndicator.querySelector('span').textContent = 'Paused';
+
+            // Update buttons
+            pauseBtn.style.display = 'none';
+            resumeBtn.style.display = 'inline-block';
+            resumeBtn.disabled = false;
+
+            // Update state
+            isPaused = true;
+        }
+
+        // Resume recording
+        function handleResumeRecording() {
+            screenRecorder.resumeRecording();
+
+            // Update recording indicator
+            recordingIndicator.querySelector('span').textContent = 'Recording';
+
+            // Update buttons
+            resumeBtn.style.display = 'none';
+            pauseBtn.style.display = 'inline-block';
+            pauseBtn.disabled = false;
+
+            // Update state
+            isPaused = false;
+        }
+
+        // Stop recording
+        function handleStopRecording() {
+            screenRecorder.stopRecording();
+
+            // Hide recording indicator
+            recordingIndicator.style.display = 'none';
+
+            // Hide timer
+            timerEl.style.display = 'none';
+
+            // Update buttons
+            startBtn.style.display = 'inline-block';
+            startBtn.disabled = false;
+            pauseBtn.style.display = 'none';
+            resumeBtn.style.display = 'none';
+            stopBtn.style.display = 'none';
+
+            // Show recording details
+            recordingDetails.style.display = 'block';
+
+            // Update state
+            isRecording = false;
+            isPaused = false;
+        }
+
+        // Start countdown
+        async function startCountdown() {
+            return new Promise((resolve) => {
+                let count = countdownSeconds;
+                countdownEl.textContent = count;
+                countdownEl.style.display = 'block';
+
+                const countdownInterval = setInterval(() => {
+                    count--;
+                    countdownEl.textContent = count;
+
+                    if (count <= 0) {
+                        clearInterval(countdownInterval);
+                        countdownEl.style.display = 'none';
+                        resolve();
+                    }
+                }, 1000);
+            });
+        }
+
+        // Save recording
+        function saveRecording() {
+            if (!recordingData) return;
+
+            // Show save modal
+            saveModal.show();
+            saveSpinner.style.display = 'block';
+            saveStatus.style.display = 'block';
+            saveSuccess.style.display = 'none';
+            saveError.style.display = 'none';
+
+            // Create form data
+            const formData = new FormData();
+            formData.append('title', titleInput.value || 'Untitled Recording');
+            formData.append('description', descriptionInput.value || '');
+            formData.append('is_public', isPublicCheckbox.checked);
+            formData.append('file', recordingData.blob, 'recording.webm');
+            formData.append('duration', Math.floor(recordingData.duration / 1000));
+
+            // Send to server
+            fetch('{% url "recording_save" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    saveSpinner.style.display = 'none';
+                    saveStatus.style.display = 'none';
+                    saveSuccess.style.display = 'block';
+
+                    // Set view recording link
+                    viewRecordingBtn.href = `/recordings/${data.id}/`;
+
+                    // Reset recording state
+                    recordingData = null;
+                } else {
+                    throw new Error(data.error || 'Failed to save recording');
+                }
+            })
+            .catch(error => {
+                console.error('Error saving recording:', error);
+
+                // Show error message
+                saveSpinner.style.display = 'none';
+                saveStatus.style.display = 'none';
+                saveError.style.display = 'block';
+                errorMessage.textContent = error.message || 'An error occurred while saving your recording.';
+            });
+        }
+
+        // Function to handle radio button selection
+        function handleRadioSelection(radioId) {
+            const radio = document.getElementById(radioId);
+            if (!radio || radio.disabled) return;
+
+            // Uncheck all other radios
+            document.querySelectorAll('input[name="audio-source"]').forEach(r => {
+                r.checked = false;
+                r.parentElement.classList.remove('active');
+            });
+
+            // Check the selected radio
+            radio.checked = true;
+            radio.parentElement.classList.add('active');
+
+            // Focus the radio
+            radio.focus();
+
+            // Announce selection for screen readers
+            const srAnnouncement = document.getElementById('sr-announcement');
+            if (srAnnouncement) {
+                srAnnouncement.textContent = `Selected: ${radio.nextElementSibling.textContent.trim()}`;
+            }
+        }
+
+        // Initialize audio source radio buttons
+        initializeAudioSourceRadios();
+
+        // Add click event listeners to the form-check divs (not just the radio buttons)
+        document.querySelectorAll('.form-check').forEach(formCheck => {
+            formCheck.addEventListener('click', function(e) {
+                // Don't handle clicks on disabled radios
+                const radio = this.querySelector('input[type="radio"]');
+                if (radio && !radio.disabled) {
+                    handleRadioSelection(radio.id);
+                    e.preventDefault(); // Prevent default to ensure our handler takes precedence
+                }
+            });
+        });
+
+        // Event listeners
+        startBtn.addEventListener('click', handleStartRecording);
+        pauseBtn.addEventListener('click', handlePauseRecording);
+        resumeBtn.addEventListener('click', handleResumeRecording);
+        stopBtn.addEventListener('click', handleStopRecording);
+
+        // Retry saving
+        retryBtn.addEventListener('click', saveRecording);
+
+        // Get CSRF token from cookies
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
+</script>
+{% endblock %}

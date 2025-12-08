@@ -1,7 +1,17 @@
+# Core dependencies
 PyQt5==5.15.9
-opencv-python==4.8.0.76
 numpy==1.24.3
-ffmpeg-python==0.2.0
+opencv-python==4.8.0.76
+Pillow==10.0.0
 screeninfo==0.8.1
+
+# Audio dependencies
 sounddevice==0.4.6
 soundfile==0.12.1
+PyAudio==0.2.13
+
+# Utility dependencies
+python-dotenv==1.0.0
+
+# Optional: For packaging the application
+pyinstaller==5.13.0
